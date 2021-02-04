@@ -20,6 +20,8 @@ Link: [https://github.com/shendeguize/CMakeTutorialCN](https://github.com/shende
   - [介绍](#介绍)
   - [Step1: 一个基本出发点](#step1-一个基本出发点)
     - [添加版本号 & 配置头文件](#添加版本号--配置头文件)
+    - [指定C++标准](#指定c标准)
+    - [构建与测试](#构建与测试)
 
 
 ## 介绍
@@ -88,3 +90,55 @@ target_include_directories(Tutorial PUBLIC
     return 1;
     }
 ```
+
+### 指定C++标准
+接下来,我们通过在`tutorial.cxx`中将`atof`替换为`std::stod`来给我们的项目增加一些C++11特性.同时,移除`#include <cstdlib>`.
+
+```C++
+const double inputValue = std::stod(argv[1]);
+```
+
+我们需要在CMake代码中显式地声明以使用正确的配置.最简单的方式是在CMake中通过使用`CMAKE_CXX_STANDARD`以启用对特定版本C++标准的支持.对于本篇教程.将`CMakeLists.txt`中的`CMAKE_CXX_STANDARD`设为11,`CMAKE_CXX_STANDARD_REQUIRED`设为`True`.并将`CMAKE_CXX_STANDARD`声明置于`add_executable`前.
+
+```CMake
+cmake_minimum_required(VERSION 3.10)
+
+# set the project name and version
+project(Tutorial VERSION 1.0)
+
+# specify the C++ standard
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+```
+
+### 构建与测试
+运行`cmake`可执行文件,或者`cmake-gui`来配置项目,然后使用所选的构建工具来构建它.
+
+例如,从命令行中,我们要进入`Help/guide/tutorial`目录下并建立一个build目录:
+
+```Shell
+mkdir Step1_build
+```
+
+之后,进入build目录,然后运行CMake来配置项目,并生成原生构建系统:
+
+```Shell
+cd Step1_build
+cmake ../Step1
+```
+
+然后调用这个构建系统来实际编译/链接项目:
+
+```Shell
+cmake --build .
+```
+
+最后,尝试用下述命令来使用新构建的`Tutorial`:
+
+```
+Tutorial 4294967296
+Tutorial 10
+Tutorial
+```
+
+
