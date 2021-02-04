@@ -22,6 +22,7 @@ Link: [https://github.com/shendeguize/CMakeTutorialCN](https://github.com/shende
     - [添加版本号 & 配置头文件](#添加版本号--配置头文件)
     - [指定C++标准](#指定c标准)
     - [构建与测试](#构建与测试)
+  - [Step2: 添加库](#step2-添加库)
 
 
 ## 介绍
@@ -141,4 +142,14 @@ Tutorial 10
 Tutorial
 ```
 
+## Step2: 添加库
+现在我们会向我们的项目中添加一个库.这个库会包含我们计算数字平方根的实现.可执行文件就可以使用库而非编译器提供的平方根函数.
+
+本篇教程里,我们会把库放在一个叫做`MathFunctions`的子文件夹下.这个目录已经包含了一个头文件`MathFunctions.h`,也包含了一个源文件`mysqrt.cxx`. 源文件中包含一个名为`mysqrt`的函数,提供了编译器中`sqrt`相近功能.
+
+把这一行加入`MathFunctions`文件夹的`CMakeLists.txt`中:
+
+```CMake
+add_library(MathFunctions mysqrt.cxx)
+```
 
