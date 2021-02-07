@@ -249,3 +249,40 @@ cmake ../Step2 -DUSE_MYMATH=OFF
 
 ### Step3: 对库添加使用依赖
 
+使用依赖运行了对于库或者可执行文件的链接和包含项更好的控制.也提供了对CMake内的可及属性的更充分的控制.控制使用依赖的首要命令包括:
++ [target_compile_definitions](https://cmake.org/cmake/help/latest/command/target_compile_definitions.html#command:target_compile_definitions)
++ [target_compile_options](https://cmake.org/cmake/help/latest/command/target_compile_options.html#command:target_compile_options)
++ [target_include_directories](https://cmake.org/cmake/help/latest/command/target_include_directories.html#command:target_include_directories)
++ [target_link_libraries](https://cmake.org/cmake/help/latest/command/target_link_libraries.html#command:target_link_libraries)
+
+让我们用现代CMake的方式重构Step2中的使用依赖的部分. 我们首先明确任何链接到MathFunctions的对象都需要包含当前原目录,除了MathFunctions本身.所以这可以作为一个`INTERFACE`使用依赖.
+
+记住`INTERFACE`指的是那些消费者需要而生产者不需要的东西.在`MathFunctions/CMakeLists.txt`的结尾加入:
+
+```CMake
+target_include_directories(MathFunctions
+          INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
+          )
+```
+
+现在我们已经指定了MathFunctions的使用依赖,我们就可以安全地移除顶级`CMakeLists.txt`文件中的`EXTRA_INCLUDES`变量:
+
+```
+if(USE_MYMATH)
+  add_subdirectory(MathFunctions)
+  list(APPEND EXTRA_LIBS MathFunctions)
+endif()
+```
+
+以及:
+
+```
+target_include_directories(Tutorial PUBLIC
+                           "${PROJECT_BINARY_DIR}"
+                           )
+```
+
+完成后,运行`cmake`或者`cmake-gui`来配置项目并通过在build目录下`cmake --build .`构建运行即可.
+
+
+
