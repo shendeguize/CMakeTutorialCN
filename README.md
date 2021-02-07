@@ -153,3 +153,32 @@ Tutorial
 add_library(MathFunctions mysqrt.cxx)
 ```
 
+为了使用新的库,我们在顶级的`CMakeLists.txt`中加入`add_subdirectory()`来构建库.我们向可执行文件加入新的库,并将`MathFunctions`添加为包含目录,这样就可以查询得到`mqsqrt.h`头文件了.顶级`CMakeLists.txt`的最后几行应该如下:
+
+```CMake
+# add the MathFunctions library
+add_subdirectory(MathFunctions)
+
+# add the executable
+add_executable(Tutorial tutorial.cxx)
+
+target_link_libraries(Tutorial PUBLIC MathFunctions)
+
+# add the binary tree to the search path for include files
+# so that we will find TutorialConfig.h
+target_include_directories(Tutorial PUBLIC
+                          "${PROJECT_BINARY_DIR}"
+                          "${PROJECT_SOURCE_DIR}/MathFunctions"
+                          )
+```
+
+接下来我们让MathFunctions库可以作为可选项.尽管本次教程不需要这样,但大型项目中这很常见.第一步是在顶层`CMakeLists.txt`中增加选项:
+
+```CMake
+option(USE_MYMATH "Use tutorial provided math implementation" ON)
+
+# configure a header file to pass some of the CMake settings
+# to the source code
+configure_file(TutorialConfig.h.in TutorialConfig.h)
+```
+
