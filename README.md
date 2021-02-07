@@ -23,7 +23,9 @@ Link: [https://github.com/shendeguize/CMakeTutorialCN](https://github.com/shende
     - [指定C++标准](#指定c标准)
     - [构建与测试](#构建与测试)
   - [Step2: 添加库](#step2-添加库)
-    - [Step3: 对库添加使用依赖](#step3-对库添加使用依赖)
+  - [Step3: 对库添加使用依赖](#step3-对库添加使用依赖)
+  - [Step4: 安装与测试](#step4-安装与测试)
+    - [安装规则](#安装规则)
 
 
 ## 介绍
@@ -247,7 +249,7 @@ cmake ../Step2 -DUSE_MYMATH=OFF
 
 那个函数结果更好,sqrt还是mysqrt?
 
-### Step3: 对库添加使用依赖
+## Step3: 对库添加使用依赖
 
 使用依赖运行了对于库或者可执行文件的链接和包含项更好的控制.也提供了对CMake内的可及属性的更充分的控制.控制使用依赖的首要命令包括:
 + [target_compile_definitions](https://cmake.org/cmake/help/latest/command/target_compile_definitions.html#command:target_compile_definitions)
@@ -284,5 +286,9 @@ target_include_directories(Tutorial PUBLIC
 
 完成后,运行`cmake`或者`cmake-gui`来配置项目并通过在build目录下`cmake --build .`构建运行即可.
 
+## Step4: 安装与测试
+现在我们开始给项目添加安装规则和测试支持.
+
+### 安装规则
 
 
