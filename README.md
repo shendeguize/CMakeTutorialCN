@@ -23,6 +23,7 @@ Link: [https://github.com/shendeguize/CMakeTutorialCN](https://github.com/shende
     - [指定C++标准](#指定c标准)
     - [构建与测试](#构建与测试)
   - [Step2: 添加库](#step2-添加库)
+    - [Step3: 对库添加使用依赖](#step3-对库添加使用依赖)
 
 
 ## 介绍
@@ -181,4 +182,70 @@ option(USE_MYMATH "Use tutorial provided math implementation" ON)
 # to the source code
 configure_file(TutorialConfig.h.in TutorialConfig.h)
 ```
+
+这一选项会在`cmake-gui`或`ccmake`中显示,默认值为ON,也可被用户修改.这一选项会被存储在缓存中,用户无需每次都设定.
+
+下一项更改是将MathFunctions库的构建和链接设定成可选的.我们在顶级`CMakeLists.txt`的结尾做如下修改:
+
+```CMake
+if(USE_MYMATH)
+  add_subdirectory(MathFunctions)
+  list(APPEND EXTRA_LIBS MathFunctions)
+  list(APPEND EXTRA_INCLUDES "${PROJECT_SOURCE_DIR}/MathFunctions")
+endif()
+
+# add the executable
+add_executable(Tutorial tutorial.cxx)
+
+target_link_libraries(Tutorial PUBLIC ${EXTRA_LIBS})
+
+# add the binary tree to the search path for include files
+# so that we will find TutorialConfig.h
+target_include_directories(Tutorial PUBLIC
+                           "${PROJECT_BINARY_DIR}"
+                           ${EXTRA_INCLUDES}
+                           )
+```
+
+变量`EXTRA_LIBS`手机了之后可以在可执行文件中链接的可选库.变量`EXTRA_INCLUDES`也相应的用于收集可选的头文件.在处理很多可选项时,这是一种经典的处理方式.下一步我们会用新方式来做.
+
+相应的源代码改动就比较直接了.首先,在`tutorial.cxx`中,如果需要则包含`MathFunctions.h`:
+
+```C++
+#ifdef USE_MYMATH
+#  include "MathFunctions.h"
+#endif
+```
+
+然后在同一个文件中,让`USE_MYMATH`变量控制函数的选择:
+
+```C++
+#ifdef USE_MYMATH
+  const double outputValue = mysqrt(inputValue);
+#else
+  const double outputValue = sqrt(inputValue);
+#endif
+```
+
+因为现在源代码中需要`USE_MYMATH`变量,我们可以在`TutorialConfig.h.in`文件中加入下述这行:
+
+```
+#cmakedefine USE_MYMATH
+```
+
+**练习**: 为什么我们在选项`USE_MYMATH`后配置`TutorialConfig.h.in`.如果我们把这两条交换会发生什么.
+
+运行`cmake`或者`cmake-gui`来配置项目,然后构建,在运行构建出的可执行文件.
+
+现在让我们更新`USE_MYMATH`的值.最简单的方式是使用`cmake-gui`或终端中的`ccmake`.或者如果想在命令行中修改这一选项:
+
+```
+cmake ../Step2 -DUSE_MYMATH=OFF
+```
+
+重新构建然后运行.
+
+那个函数结果更好,sqrt还是mysqrt?
+
+### Step3: 对库添加使用依赖
 
