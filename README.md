@@ -26,6 +26,7 @@ Link: [https://github.com/shendeguize/CMakeTutorialCN](https://github.com/shende
   - [Step3: 对库添加使用依赖](#step3-对库添加使用依赖)
   - [Step4: 安装与测试](#step4-安装与测试)
     - [安装规则](#安装规则)
+    - [测试支持](#测试支持)
 
 
 ## 介绍
@@ -290,5 +291,83 @@ target_include_directories(Tutorial PUBLIC
 现在我们开始给项目添加安装规则和测试支持.
 
 ### 安装规则
+安装规则非常简单: 对于MathFunctions,我们希望安装库和头文件,对于应用,我们希望安装可执行文件和配置头.
+
+所以在`MathFunctions/CMakeLists.txt`的结尾我们添加:
+
+```CMake
+install(TARGETS MathFunctions DESTINATION lib)
+install(FILES MathFunctions.h DESTINATION include)
+```
+
+在顶层`CMakeLists.txt`的结尾添加:
+
+```
+install(TARGETS Tutorial DESTINATION bin)
+install(FILES "${PROJECT_BINARY_DIR}/TutorialConfig.h"
+  DESTINATION include
+  )
+```
+
+这就是建立一个tutorial的基础本地安装所需要的全部内容.
+
+现在我们运行`cmake`或者`cmake-gui`来配置项目并构建.
+
+然后通过在命令行中运行`cmake`的`install`选项来执行安装步骤(3.15引入,早先版本必须使用make install).对于多配制工具,要记得使用`--config`来指定配置.如果使用IDE,直接构建`INSTALL`目标即可.这一步会安装适合的头文件,库和可执行文件:
+
+```
+camke --install .
+```
+
+CMake变量`CMAKE_INSTALL_PREFIX`用于确定文件安装的根目录.如果使用`cmake --install`命令,安装前驻可以被`--prefix`参数覆写:
+
+```
+cmake --install . --prefix "/home/myuser/installdir"
+```
+
+浏览安装目录然后验证安装的Tutorial可以运行.
+
+### 测试支持
+
+接下来让我们测试我们的应用,在顶级`CMakeLists.txt`的结尾,我们可以打开测试功能然后加一些基本测试来验证安装正确.
+
+```CMake
+enable_testing()
+
+# does the application run
+add_test(NAME Runs COMMAND Tutorial 25)
+
+# does the usage message work?
+add_test(NAME Usage COMMAND Tutorial)
+set_tests_properties(Usage
+  PROPERTIES PASS_REGULAR_EXPRESSION "Usage:.*number"
+  )
+
+# define a function to simplify adding tests
+function(do_test target arg result)
+  add_test(NAME Comp${arg} COMMAND ${target} ${arg})
+  set_tests_properties(Comp${arg}
+    PROPERTIES PASS_REGULAR_EXPRESSION ${result}
+    )
+endfunction(do_test)
+
+# do a bunch of result based tests
+do_test(Tutorial 4 "4 is 2")
+do_test(Tutorial 9 "9 is 3")
+do_test(Tutorial 5 "5 is 2.236")
+do_test(Tutorial 7 "7 is 2.645")
+do_test(Tutorial 25 "25 is 5")
+do_test(Tutorial -25 "-25 is [-nan|nan|0]")
+do_test(Tutorial 0.0001 "0.0001 is 0.01")
+```
+
+第一个测试简单验证了应用运行,没有段错误或其他崩溃发生.并有一个0返回值.这是CTest测试的基本格式.
+
+下一个测试使用了`PASS_REGULAR_EXPRESSION`测试属性来验证测试输出包含特定字符串.用于在参数输入数量不对时打印使用信息.
+
+最后,我们有一个叫做`do_test`的函数来运行应用并验证计算平方根的结果对于给定输出是正确的.对于没错`do_test`的唤起,项目中就会被加入一个带有明早,输入和期待结果的测试.
+
+重新构建应用然后进入二进制目录并运行`ctest`可执行文件:`ctest -N`和`ctest -VV`(译者注:注意是两个V).对于多配制生成器(例如Visual Studio),配置类型必须要指定.为了在DEbug模式下运行测试,例如在构建目录下(而非Debug目录下)使用`ctest -C Debug -VV`.或者在IDE中构建`RUN_TESTS`目标.
+
 
 
