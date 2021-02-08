@@ -372,4 +372,65 @@ do_test(Tutorial 0.0001 "0.0001 is 0.01")
 
 ## Step5: 增加系统自检
 
+现在我们想项目中增加一些代码,而这些代码依赖的特性可能是目标平台没有的.例如,我们要加入的代码依赖于目标平台是否有`log`和`exp`函数.当然,对于每个平台而言,这些功能都是有的,但是在本篇教程中,我们假定这些功能不是都存在的.
+
+如果平台有`log`和`exp`那么我们就在`mysqrt`函数里使用.我们首先在顶层`CMakeLists.txt`里用`CheckSymbolExists`来测试这些函数的可用性.在一些平台,我们会需要连接到`m`库如果`log`和`exp`没有被招到,就需要在`m`库里再试试.
+
+```CMake
+include(CheckSymbolExists)
+check_symbol_exists(log "math.h" HAVE_LOG)
+check_symbol_exists(exp "math.h" HAVE_EXP)
+if(NOT (HAVE_LOG AND HAVE_EXP))
+  unset(HAVE_LOG CACHE)
+  unset(HAVE_EXP CACHE)
+  set(CMAKE_REQUIRED_LIBRARIES "m")
+  check_symbol_exists(log "math.h" HAVE_LOG)
+  check_symbol_exists(exp "math.h" HAVE_EXP)
+  if(HAVE_LOG AND HAVE_EXP)
+    target_link_libraries(MathFunctions PRIVATE m)
+  endif()
+endif()
+```
+
+现在让我们给`TutorialConfig.h.in`添加一些定义,这样我们就可以在`mysqrt.cxx`里使用了:
+
+```
+// does the platform provide exp and log functions?
+#cmakedefine HAVE_LOG
+#cmakedefine HAVE_EXP
+```
+
+如果`log`和`exp`在系统上可用,那么我们就在`mysqrt`里使用它们.在`MathFunctions/mysqrt.cxx`里的`mysqrt`里添加下述代码(别忘了返回值之前加`#endif`):
+
+```C++
+#if defined(HAVE_LOG) && defined(HAVE_EXP)
+  double result = exp(log(x) * 0.5);
+  std::cout << "Computing sqrt of " << x << " to be " << result
+            << " using log and exp" << std::endl;
+#else
+  double result = x;
+```
+
+我们也需要修改`mysqrt.cxx`来包含`cmath`:
+
+```C++
+#include <cmath>
+```
+
+运行`cmake`或者`cmake-gui`来配置项目,然后构建并执行Tutorial.
+
+会注意到我们没有使用`log`和`exp`,即使我们认为它们应该是可用的.我们应该很容易发现,我们忘记在`mysqrt.cxx`中包含`TutorialConfig.h`了.
+
+我们也需要更新`MathFunctions/CMakeLists.txt`,这样`mysqrt.cxx`才能够定位文件:
+
+```CMake
+target_include_directories(MathFunctions
+          INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
+          PRIVATE ${CMAKE_BINARY_DIR}
+          )
+```
+
+这样更新后,继续并构建项目,然后运行Tutorial.如果`log`和`exp`仍然没有被使用,打开构建目录下的生成的`Tutorial.h`文件,可能他们在当前系统下不可用的.
+
+那个函数目前结果更好呢,sqrt还是mysqrt?
 
