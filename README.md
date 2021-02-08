@@ -28,6 +28,8 @@ Link: [https://github.com/shendeguize/CMakeTutorialCN](https://github.com/shende
     - [安装规则](#安装规则)
     - [测试支持](#测试支持)
   - [Step5: 增加系统自检](#step5-增加系统自检)
+    - [指定编译定义](#指定编译定义)
+  - [Step6: 添加自定义命令和生成文件](#step6-添加自定义命令和生成文件)
 
 
 ## 介绍
@@ -434,3 +436,35 @@ target_include_directories(MathFunctions
 
 那个函数目前结果更好呢,sqrt还是mysqrt?
 
+### 指定编译定义
+除了在`TutorialConfig.h`中存储`HAVE_LOG`和`HAVE_EXP`值以外更好的地方么?让我们试试使用`target_compile_definitions()`.
+
+首先将定义从`TutorialConfig.h`中移除,我们不再需要从`mysqrt.cxx`中包含`TutorialConfig.h`或者在`MathFunctions/CMakeLists.txt`中额外包含了.
+
+接下来我们可以把`HAVE_LOG`和`HAVR_EXP`的检查移动到`MathFunctions/CMakeLists.txt`中,然后把这些纸设定为`PRIVATE`编译定义.
+
+```CMake
+include(CheckSymbolExists)
+check_symbol_exists(log "math.h" HAVE_LOG)
+check_symbol_exists(exp "math.h" HAVE_EXP)
+if(NOT (HAVE_LOG AND HAVE_EXP))
+  unset(HAVE_LOG CACHE)
+  unset(HAVE_EXP CACHE)
+  set(CMAKE_REQUIRED_LIBRARIES "m")
+  check_symbol_exists(log "math.h" HAVE_LOG)
+  check_symbol_exists(exp "math.h" HAVE_EXP)
+  if(HAVE_LOG AND HAVE_EXP)
+    target_link_libraries(MathFunctions PRIVATE m)
+  endif()
+endif()
+
+# add compile definitions
+if(HAVE_LOG AND HAVE_EXP)
+  target_compile_definitions(MathFunctions
+                             PRIVATE "HAVE_LOG" "HAVE_EXP")
+endif()
+```
+
+这样调整更新后,重新构建项目,再运行Tutorial并确认结果和此前一致.
+
+## Step6: 添加自定义命令和生成文件
