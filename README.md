@@ -27,6 +27,7 @@ Link: [https://github.com/shendeguize/CMakeTutorialCN](https://github.com/shende
   - [Step4: 安装与测试](#step4-安装与测试)
     - [安装规则](#安装规则)
     - [测试支持](#测试支持)
+  - [Step5: 增加系统自检](#step5-增加系统自检)
 
 
 ## 介绍
@@ -369,5 +370,6 @@ do_test(Tutorial 0.0001 "0.0001 is 0.01")
 
 重新构建应用然后进入二进制目录并运行`ctest`可执行文件:`ctest -N`和`ctest -VV`(译者注:注意是两个V).对于多配制生成器(例如Visual Studio),配置类型必须要指定.为了在DEbug模式下运行测试,例如在构建目录下(而非Debug目录下)使用`ctest -C Debug -VV`.或者在IDE中构建`RUN_TESTS`目标.
 
+## Step5: 增加系统自检
 
 
