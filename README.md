@@ -30,6 +30,9 @@ Link: [https://github.com/shendeguize/CMakeTutorialCN](https://github.com/shende
   - [Step5: 增加系统自检](#step5-增加系统自检)
     - [指定编译定义](#指定编译定义)
   - [Step6: 添加自定义命令和生成文件](#step6-添加自定义命令和生成文件)
+  - [Step7: 构建安装器.](#step7-构建安装器)
+  - [Step8: 增加对Dashboard的支持](#step8-增加对dashboard的支持)
+  - [Step9: 混合静态和共享](#step9-混合静态和共享)
 
 
 ## 介绍
