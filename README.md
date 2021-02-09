@@ -470,4 +470,73 @@ endif()
 ## Step6: 添加自定义命令和生成文件
 假设对于本次教程而言,我们决定我们不再想使用平台的`log`和`exp`函数,并希望生成一些会在`mysqrt`函数里使用到的预计算值表.在本节,我们会建立这个表并作为够贱的异步,然后编译到我们的应用中.
 
-首先,我们移除`MathFunctions/CMakeLists.txt`中的对`log`和`exp`的检查.然后移除`mysqrt.cxx`中对`HAVE_LOG`和`HAVR_EXP`的检查.
+首先,我们移除`MathFunctions/CMakeLists.txt`中的对`log`和`exp`的检查.然后移除`mysqrt.cxx`中对`HAVE_LOG`和`HAVR_EXP`的检查.同事,我们也可以移除`#include <cmath>`
+
+在`MathFunctions`子目录下,有一个新文件`MakeTable.cxx`用于生成表格.
+
+浏览这个文件可以发现,表格是C++代码生成的并且输出文件名是通过参数传入的.
+
+下一步是在`MathFunctions/CMakeLists.txt`中天机合适的命令来构建`MakeTable`可执行文件,然后作为构建流程的一部分来运行.需要一些命令来完成这一步.
+
+首先,在`MathFunctions/CMakeLists.txt`的开头,`MateTable`的可执行被作为额外的可执行文件来添加.
+
+```CMake
+add_executable(MakeTable MakeTable.cxx)
+```
+
+然后我们添加一项定义命令来指定怎么通过运行`MakeTable`创建表格.
+
+```Cmake
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/Table.h
+  COMMAND MakeTable ${CMAKE_CURRENT_BINARY_DIR}/Table.h
+  DEPENDS MakeTable
+  )
+```
+
+接下来我们要让CMake知道`mysqrt.cxx`依赖创建的`Table.h`.这是通过将生成`Table.h`添加到`MathFunctions`库的源列表.
+
+```CMake
+add_library(MathFunctions
+            mysqrt.cxx
+            ${CMAKE_CURRENT_BINARY_DIR}/Table.h
+            )
+```
+
+现在让我们用上生成的表,首先,修改`mysqrt.cxx`来包含`Table.h`然后我们可以重写`mysqrt`函数以使用这张表:
+
+```C++
+double mysqrt(double x)
+{
+  if (x <= 0) {
+    return 0;
+  }
+
+  // use the table to help find an initial value
+  double result = x;
+  if (x >= 1 && x < 10) {
+    std::cout << "Use the table to help find an initial value " << std::endl;
+    result = sqrtTable[static_cast<int>(x)];
+  }
+
+  // do ten iterations
+  for (int i = 0; i < 10; ++i) {
+    if (result <= 0) {
+      result = 0.1;
+    }
+    double delta = x - (result * result);
+    result = result + 0.5 * delta / result;
+    std::cout << "Computing sqrt of " << x << " to be " << result << std::endl;
+  }
+
+  return result;
+}
+```
+
+运行`cmake`或者`cmake-gui`来配置项目并构建.
+
+当项目被构建时,首先被构建的是`MakeTable`,然后会运行`MakeTable`并创建`Table.h`.最后会编译包含了`Table.h`的`mysqrt.cxx`来创建MathFunctions库.
+
+运行Tutorial可执行文件然后验证使用了表格.
+
+## Step7: 构建安装器.
