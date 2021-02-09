@@ -540,3 +540,42 @@ double mysqrt(double x)
 运行Tutorial可执行文件然后验证使用了表格.
 
 ## Step7: 构建安装器.
+下一步,我们假定我们想要发布我们的项目这样其他人可以使用我们项目了.我们想在多种平台上发布二进制和原发布.这和我们在第四步里所做的有所不同.第四步里我们安装的是从源代码够贱的二进制.在本例中,我们会构建支持二进制安装和包管理特性的安装包.为此,我们会使用CPack来生成对应平台的安装器.特定地,我们需要在我们顶级的`CMakeLists.txt`底添加几行:
+
+```CMake
+include(InstallRequiredSystemLibraries)
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/License.txt")
+set(CPACK_PACKAGE_VERSION_MAJOR "${Tutorial_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${Tutorial_VERSION_MINOR}")
+include(CPack)
+```
+
+就这样就可以.我们通过包含[InstallRequiredSystemLibraries](https://cmake.org/cmake/help/latest/module/InstallRequiredSystemLibraries.html#module:InstallRequiredSystemLibraries)来开始.这一魔困会包含任何项目当前平台所需的运行库.下一步我们设定一些CPack变量到我们存储项目许可和版本信息的位置.版本信息早先在本篇教程里设定好了.`license.txt`在这一步被包含在顶级源目录中.
+
+最后,我们包含[CPack module](https://cmake.org/cmake/help/latest/module/CPack.html#module:CPack).CPack模块会使用那这些变量和当前系统的其他变量来配置安装器.
+
+下一步是和正常一样构建项目然后巡行[cpack](https://cmake.org/cmake/help/latest/manual/cpack.1.html#manual:cpack(1))可执行文件.从binary目录下运行以下命令以构建二进制发布:
+
+```
+cpack
+```
+
+为了指定生成器,使用`-G`选项,对于多配制构建,使用`-C`来指定配置,如下:
+
+```
+cpack -G ZIP -C Debug
+```
+
+为了构建一个源代码发布,可以使用:
+
+```
+cpack --config CPackSourceConfig.cmake
+```
+
+或者运行`make package`或者在IDE中右键`Package`目录然后`Build Project`.
+
+运行在二进制文件夹中的安装器,然后运行安装的可执行文件并验证可以运行.
+
+## Step8: 增加对Dashboard的支持
+
+
