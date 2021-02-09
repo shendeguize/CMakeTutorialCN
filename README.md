@@ -577,5 +577,45 @@ cpack --config CPackSourceConfig.cmake
 运行在二进制文件夹中的安装器,然后运行安装的可执行文件并验证可以运行.
 
 ## Step8: 增加对Dashboard的支持
+添加对测试提交到仪表盘的支持是很简单的.我们在测试支持一步中已经给我们的项目定义了一系测试.现在我们只需要运行这些测试并将他们提交到仪表盘上即可.为了包含仪表盘的支持,我们在顶级`CMakeLists.txt`里包含`CTest`模块.
 
+将
+
+```
+# enable testing
+enable_testing()
+```
+
+替换为
+
+```
+# enable dashboard scripting
+include(CTest)
+```
+
+CTest模块会自动调用`enable_testing()`,所以我们你就可以从CMake文件里移除这一语句.
+
+我们也需要在顶级目录下(我们制定项目名和提交到面板的目录)建立一个`CTestConfig.cmake`文件.
+
+```
+set(CTEST_PROJECT_NAME "CMakeTutorial")
+set(CTEST_NIGHTLY_START_TIME "00:00:00 EST")
+
+set(CTEST_DROP_METHOD "http")
+set(CTEST_DROP_SITE "my.cdash.org")
+set(CTEST_DROP_LOCATION "/submit.php?project=CMakeTutorial")
+set(CTEST_DROP_SITE_CDASH TRUE)
+```
+
+`ctest`可执行文件会在运行时读取这个文件.可以运行`cmake`或者`cmake-gui`来配置项目但是不构建项目来建立一个简单的面板.切换到二进制树目录下然后运行:
+
+```
+ctest [-VV] -C Debug -D Experimental
+```
+
+或者在IDE中构建`Experimental`目标.
+
+`ctest`可执行文件会构建和测试项目并提交结果到Kitware的公共面板:[https://my.cdash.org/index.php?project=CMakeTutorial](https://my.cdash.org/index.php?project=CMakeTutorial).
+
+## Step9: 混合静态和共享
 
