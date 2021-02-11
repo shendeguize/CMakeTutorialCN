@@ -941,4 +941,72 @@ export(EXPORT MathFunctionsTargets
 
 ## STep12: 打包Debug和Release
 
+**注意**: 这个历史对于但配置生成器有效.而对于多配制生成器无效(例如Visual Studio)
+
+默认情况下,CMake模型是只包含单配置也就是Debug,Release,MinSizeRel或者RelWithDebInfo等的构建目录.但是是可以通过CPack打包多个构建目录以及构建一个包含同一项目多个配置的包.
+
+首先,我们想要确认debug和release的构建使用不同的可能执行和库名字.让我们使用`d`作为调试的可执行和库的后缀.
+
+在顶级`CMakeLists.txt`文件的开头设定`CMAKE_DEBUG_POSTFIX`:
+
+```
+set(CMAKE_DEBUG_POSTFIX d)
+
+add_library(tutorial_compiler_flags INTERFACE)
+```
+
+给tutorial的可执行文件添加`DEBUG_POSTFIX`属性:
+
+```
+add_executable(Tutorial tutorial.cxx)
+set_target_properties(Tutorial PROPERTIES DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
+
+target_link_libraries(Tutorial PUBLIC MathFunctions)
+```
+
+让我们也给MathFunctions库添加版本号.在`MathFunctions/CMakeLists.txt`设定`VERSION`和`SOVERSION`属性:
+
+```
+set_property(TARGET MathFunctions PROPERTY VERSION "1.0.0")
+set_property(TARGET MathFunctions PROPERTY SOVERSION "1")
+```
+
+从`Step12`目录,创建`debug`和`release`子目录,结构如下:
+
+```
+- Step12
+   - debug
+   - release
+```
+
+现在我们需要设定debug和release构建.我们可以用`CMAKE_BUILD_TYPE`来设定配置类型:
+
+```
+cd debug
+cmake -DCMAKE_BUILD_TYPE=Debug ..
+cmake --build .
+cd ../release
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build .
+```
+
+现在debug和release的构建都完成了.我们可以用自定义配置文件来讲两个构建都打包到同一个发布包中.在`Step12`目录小,创建一个名为`MultiConfig.cmake`的文件.在文件中,首先包含通过`cmake`创建的默认配置文件.
+
+接下来,用`CPACK_INSTALL_CMAKE_PROJECTS`变量来制定安装哪个项目.这时,我们想安装debug和release两个版本:
+
+```
+include("release/CPackConfig.cmake")
+
+set(CPACK_INSTALL_CMAKE_PROJECTS
+    "debug;Tutorial;ALL;/"
+    "release;Tutorial;ALL;/"
+    )
+```
+
+从`Step12`目录下,运行`cpack`命令通过`config`选项来指定我们自定义的配置文件:
+
+```
+cpack --config MultiCPackConfig.cmake
+```
+
 
