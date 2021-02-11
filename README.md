@@ -797,4 +797,7 @@ double DECLSPEC sqrt(double x);
 
 ## Step10: 增加生成表达式
 
+[生成器表达式](https://cmake.org/cmake/help/latest/manual/cmake-generator-expressions.7.html#manual:cmake-generator-expressions(7))是在构建系统生成期间执行以生成对于每一特定配置专有的信息.
+
+生成表达式可以在许多目标属性内容中使用,诸如`LINK_LIBRARIES`,`INCLUDE_DIRECTORIES`,`COMPILE_DEFINITIONS`和其他一些属性.生成表达式也可以在使用命令丰富这些属性的时候使用,例如`target_link_libraries()`,`target_include_directories()`,`target_compile_definitions()`和其他命令.
 
