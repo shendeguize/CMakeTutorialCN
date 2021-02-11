@@ -35,6 +35,7 @@ Link: [https://github.com/shendeguize/CMakeTutorialCN](https://github.com/shende
   - [Step9: 混合静态和共享](#step9-混合静态和共享)
   - [Step10: 增加生成表达式](#step10-增加生成表达式)
   - [Step11 增加导出配置](#step11-增加导出配置)
+  - [STep12: 打包Debug和Release](#step12-打包debug和release)
 
 
 ## 介绍
@@ -841,6 +842,103 @@ target_compile_options(tutorial_compiler_flags INTERFACE
 **练习**:修改`MathFunctions/CMakeLists.txt`这样所有的目标都有`target_link_libraries()`调用`tutorial_compiler_flags`.
 
 ## Step11 增加导出配置
+z在第四步中,我们为CMake增加了安装库和头文件的功能.在第七步我们增加了打包这些信息以可以发布给给其他人.
 
+下一步是增加必要信息这样其他的CMAke项目可以用我们的项目或基于构建目录,本地安装或者打包时使用.
+
+第一步是更新我们`install(TARGETS)`命令来不仅仅指定`DESTINATION`也指定`EXPORT`.`EXPORT`关键字生成并安装一个CMake文件,这一文件包含着导入所有安装树里安装命令所列出的所有目标的代码.让我们继续然后通过更新`MathFunctions/CMakeLists.txt`里的`install`命令显示`EXPORT`MathFunctions库:
+
+```CMake
+set(installable_libs MathFunctions tutorial_compiler_flags)
+if(TARGET SqrtLibrary)
+  list(APPEND installable_libs SqrtLibrary)
+endif()
+install(TARGETS ${installable_libs}
+        DESTINATION lib
+        EXPORT MathFunctionsTargets)
+install(FILES MathFunctions.h DESTINATION include)
+```
+
+现在我们已经导出了MathFunctions,我们也需要显示的安装生成的`MathFunctionsTargets.cmake`文件.这是通过在顶级`CMakeLists.txt`的底部添加:
+
+```
+install(EXPORT MathFunctionsTargets
+  FILE MathFunctionsTargets.cmake
+  DESTINATION lib/cmake/MathFunctions
+)
+```
+
+这是应该试着运行CMake.如果设置都正确的话,CMake应该会报错如下:
+
+```
+Target "MathFunctions" INTERFACE_INCLUDE_DIRECTORIES property contains
+path:
+
+  "/Users/robert/Documents/CMakeClass/Tutorial/Step11/MathFunctions"
+
+which is prefixed in the source directory.
+```
+
+CMake报错描述的是在生成到处信息期间,会导出内在绑定到当前设备的路径,在其他设备上可能无效.解决方案是更新MathFunctions的`target_include_directories()`,以明确在从构建目录使用和从安装包使用时需要不同的`INTERFACE`位置.这意味着转化MathFunctions的`target_include_directories()`调用应如下:
+
+```
+target_include_directories(MathFunctions
+                           INTERFACE
+                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+                            $<INSTALL_INTERFACE:include>
+                           )
+```
+
+这一项更新后,我们就可以重新运行CMake并验证不再有警告了.
+
+到这里,我们已经将CMake配置打包好了所需的目标信息.但是我们也仍然需要生成`MathFunctionsConfig.cmake`以使得CMake的`find_package()`能够找到我们的项目.所以让我们继续然后再丁基项目下建立名为`Config.cmake.in`的文件并写入下述代码:
+
+```
+@PACKAGE_INIT@
+
+include ( "${CMAKE_CURRENT_LIST_DIR}/MathFunctionsTargets.cmake" )
+```
+
+然后为了真确配置安装这个文件.将下述内容写入顶级`CMakeLists.txt`的结尾:
+
+```
+install(EXPORT MathFunctionsTargets
+  FILE MathFunctionsTargets.cmake
+  DESTINATION lib/cmake/MathFunctions
+)
+
+include(CMakePackageConfigHelpers)
+# generate the config file that is includes the exports
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/MathFunctionsConfig.cmake"
+  INSTALL_DESTINATION "lib/cmake/example"
+  NO_SET_AND_CHECK_MACRO
+  NO_CHECK_REQUIRED_COMPONENTS_MACRO
+  )
+# generate the version file for the config file
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/MathFunctionsConfigVersion.cmake"
+  VERSION "${Tutorial_VERSION_MAJOR}.${Tutorial_VERSION_MINOR}"
+  COMPATIBILITY AnyNewerVersion
+)
+
+# install the configuration file
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/MathFunctionsConfig.cmake
+  DESTINATION lib/cmake/MathFunctions
+  )
+```
+
+这里,我们已经生成了一个可重定位的CMake配置并是可以在项目安装或者打包后使用的.如果我们想让我买的项目也能够在构建目录使用.我们只需要在顶级`CMakeLists.txt`的结尾添加下述内容:
+
+```
+export(EXPORT MathFunctionsTargets
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/MathFunctionsTargets.cmake"
+)
+```
+
+有这一导出后,我们现在生成一个`Targets.cmake`,允许在构建目录里配置好的`MathFunctionsConfig.cmake`可以被其他项目适用而无需安装.
+
+## STep12: 打包Debug和Release
 
 
