@@ -34,6 +34,7 @@ Link: [https://github.com/shendeguize/CMakeTutorialCN](https://github.com/shende
   - [Step8: 增加对Dashboard的支持](#step8-增加对dashboard的支持)
   - [Step9: 混合静态和共享](#step9-混合静态和共享)
   - [Step10: 增加生成表达式](#step10-增加生成表达式)
+  - [Step11 增加导出配置](#step11-增加导出配置)
 
 
 ## 介绍
@@ -800,4 +801,46 @@ double DECLSPEC sqrt(double x);
 [生成器表达式](https://cmake.org/cmake/help/latest/manual/cmake-generator-expressions.7.html#manual:cmake-generator-expressions(7))是在构建系统生成期间执行以生成对于每一特定配置专有的信息.
 
 生成表达式可以在许多目标属性内容中使用,诸如`LINK_LIBRARIES`,`INCLUDE_DIRECTORIES`,`COMPILE_DEFINITIONS`和其他一些属性.生成表达式也可以在使用命令丰富这些属性的时候使用,例如`target_link_libraries()`,`target_include_directories()`,`target_compile_definitions()`和其他命令.
+
+生成表达式可用于启用条件链接,在编译时的条件定义,条件包含目录和其他.这些条件可能基于构建配置,目标属性,平台信息或者其他可查询信息.
+
+有一些不同类型的生成表达式包括逻辑,信息的和输出表达式.
+
+逻辑表达式用于创建条件输出.基本表单时是01表达式,`$<0:...>`结果是一个空字符串,`$<1:...>`结果是`"..."`的内容.也同样是可嵌套的.
+
+生成表达式的普遍用法是依据不同条件添加编译器标志,例如语言级别的或者警告.一个好的模式是把这些信息和允许传播这些信息的`INTERFACE`目标关联起来.让我们从构建一个`INTERFACE`目标并指定需要的C++标准级别是`11`而非`CMAKE_CXX_STANDARD`.
+
+故下述代码:
+
+```
+# specify the C++ standard
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+```
+
+被替换为:
+
+```
+add_library(tutorial_compiler_flags INTERFACE)
+target_compile_features(tutorial_compiler_flags INTERFACE cxx_std_11)
+```
+
+下一步我们添加项目所需的预期的编译器警告标志.因为警告标志基于编译器,我们用`COMPILE_LAND_AND_ID`生成器表达式来控制哪些标志来用于给定的语言和一系列编译器id如下:
+
+```
+set(gcc_like_cxx "$<COMPILE_LANG_AND_ID:CXX,ARMClang,AppleClang,Clang,GNU>")
+set(msvc_cxx "$<COMPILE_LANG_AND_ID:CXX,MSVC>")
+target_compile_options(tutorial_compiler_flags INTERFACE
+  "$<${gcc_like_cxx}:$<BUILD_INTERFACE:-Wall;-Wextra;-Wshadow;-Wformat=2;-Wunused>>"
+  "$<${msvc_cxx}:$<BUILD_INTERFACE:-W3>>"
+)
+```
+
+我们能发现警告信息被封装在`BUILD_INTERFACE`条件内.这样可以让我们我们安装的项目用户不会继承我们的警告标志.
+
+**练习**:修改`MathFunctions/CMakeLists.txt`这样所有的目标都有`target_link_libraries()`调用`tutorial_compiler_flags`.
+
+## Step11 增加导出配置
+
+
 
